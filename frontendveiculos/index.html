@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veículos - Teste de Endpoints</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+        .button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Testando Endpoints de Veículos</h1>
+
+    <!-- Seção de Cadastro -->
+    <div class="section" id="cadastrarVeiculo">
+        <h2>Cadastrar Veículo</h2>
+        <form id="formCadastrar">
+            <label for="veiculo">Veículo:</label>
+            <input type="text" id="veiculo" name="veiculo" required><br><br>
+            <label for="marca">Marca:</label>
+            <input type="text" id="marca" name="marca" required><br><br>
+            <label for="ano">Ano:</label>
+            <input type="number" id="ano" name="ano" required><br><br>
+            <label for="descricao">Descrição:</label>
+            <input type="text" id="descricao" name="descricao" required><br><br>
+            <label for="cor">Cor:</label>
+            <input type="text" id="cor" name="cor" required><br><br>
+            
+            <!-- Campo de 'Vendido' -->
+            <label for="vendido">Vendido:</label>
+            <input type="checkbox" id="vendido" name="vendido"><br><br>
+            
+            <button type="submit" class="button">Cadastrar</button>
+        </form>
+        <p id="statusCadastro"></p>
+    </div>
+
+    <!-- Seção de Listagem -->
+    <div class="section" id="listarVeiculos">
+        <h2>Listar Veículos</h2>
+        <button class="button" id="btnListar">Listar Todos</button>
+        <table id="tabelaVeiculos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Veículo</th>
+                    <th>Marca</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Modal para exibir detalhes do veículo -->
+    <div id="detalhesModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Detalhes do Veículo</h2>
+            <p><strong>ID:</strong> <span id="detalheId"></span></p>
+            <p><strong>Veículo:</strong> <span id="detalheVeiculo"></span></p>
+            <p><strong>Marca:</strong> <span id="detalheMarca"></span></p>
+            <p><strong>Ano:</strong> <span id="detalheAno"></span></p>
+            <p><strong>Descrição:</strong> <span id="detalheDescricao"></span></p>
+            <p><strong>Cor:</strong> <span id="detalheCor"></span></p>
+            <p><strong>Vendido:</strong> <span id="detalheVendido"></span></p>
+        </div>
+    </div>
+
+    <!-- Seção de Excluir -->
+    <div class="section" id="excluirVeiculo">
+        <h2>Excluir Veículo</h2>
+        <label for="excluirId">ID do Veículo:</label>
+        <input type="number" id="excluirId" required>
+        <button id="btnExcluir" class="button">Excluir</button>
+        <p id="statusExcluir"></p>
+    </div>
+
+
+    <script>
+        const apiUrl = 'http://localhost:8080/veiculos';
+
+        // Cadastrar veículo
+        $('#formCadastrar').on('submit', function(event) {
+            event.preventDefault();
+            const veiculo = {
+                veiculo: $('#veiculo').val(),
+                marca: $('#marca').val(),
+                ano: $('#ano').val(),
+                descricao: $('#descricao').val(),
+                cor: $('#cor').val(),
+                vendido: $('#vendido').prop('checked')  // Verifica se o checkbox está marcado
+            };
+
+            $.ajax({
+                url: apiUrl,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(veiculo),
+                success: function(response) {
+                    $('#statusCadastro').text('Veículo cadastrado com sucesso!');
+                    $('#formCadastrar')[0].reset(); // Limpa o formulário
+                },
+                error: function() {
+                    $('#statusCadastro').text('Erro ao cadastrar veículo.');
+                }
+            });
+        });
+
+        // Função para exibir os detalhes do veículo no modal
+        function detalharVeiculo(id) {
+            $.ajax({
+                url: apiUrl + '/' + id, // Chama o endpoint de detalhes para o ID específico
+                type: 'GET',
+                success: function(veiculo) {
+                    // Preenche o modal com os dados do veículo
+                    $('#detalheId').text(veiculo.id);
+                    $('#detalheVeiculo').text(veiculo.veiculo);
+                    $('#detalheMarca').text(veiculo.marca);
+                    $('#detalheAno').text(veiculo.ano);
+                    $('#detalheDescricao').text(veiculo.descricao);
+                    $('#detalheCor').text(veiculo.cor);
+                    $('#detalheVendido').text(veiculo.vendido ? 'Sim' : 'Não');
+                    
+                    // Exibe o modal
+                    $('#detalhesModal').css('display', 'block');
+                },
+                error: function() {
+                    alert('Erro ao carregar os detalhes do veículo');
+                }
+            });
+        }
+
+        // Fecha o modal ao clicar no "x"
+        $('.close').on('click', function() {
+            $('#detalhesModal').css('display', 'none');
+        });
+
+        // Fecha o modal se clicar fora da área do modal
+        $(window).on('click', function(event) {
+            if ($(event.target).is('#detalhesModal')) {
+                $('#detalhesModal').css('display', 'none');
+            }
+        });
+
+
+        // Listar veículos
+        $('#btnListar').on('click', function() {
+            $.ajax({
+                url: apiUrl,
+                type: 'GET',
+                success: function(veiculos) {
+                    $('#tabelaVeiculos tbody').empty();
+                    veiculos.forEach(function(veiculo) {
+                        $('#tabelaVeiculos tbody').append(`
+                            <tr>
+                                <td>${veiculo.id}</td>
+                                <td>${veiculo.veiculo}</td>
+                                <td>${veiculo.marca}</td>
+                                <td>
+                                    <button class="button" onclick="detalharVeiculo(${veiculo.id})">Detalhar</button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                },
+                error: function() {
+                    alert('Erro ao listar veículos');
+                }
+            });
+        });
+
+        // Excluir veículo
+        $('#btnExcluir').on('click', function() {
+            const id = $('#excluirId').val();
+            $.ajax({
+                url: apiUrl + '/' + id,
+                type: 'DELETE',
+                success: function() {
+                    $('#statusExcluir').text('Veículo excluído com sucesso!');
+                    $('#excluirId').val(''); // Limpa o campo
+                },
+                error: function() {
+                    $('#statusExcluir').text('Erro ao excluir veículo.');
+                }
+            });
+        });
+
+    </script>
+
+</body>
+</html>
